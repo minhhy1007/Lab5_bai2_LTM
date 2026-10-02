@@ -148,6 +148,15 @@ public class MailServer {
                         log("LOGIN " + username); // An toàn: Không log password
                         response = handleLogin(username, password);
                     }
+                } else if (requestType.startsWith("GET_EMAILS") || requestType.startsWith("REFRESH_MAILBOX")) {
+                    String[] parts = requestType.split(" ", 2);
+                    if (parts.length < 2 || parts[1].trim().isEmpty()) {
+                        response = "GET_EMAILS_FAIL - Username khong duoc de rong!";
+                    } else {
+                        String username = parts[1].trim();
+                        log("GET_EMAILS " + username);
+                        response = handleGetEmails(username);
+                    }
                 } else if (requestType.startsWith("READ_MAIL")) {
                     String[] parts = requestType.split(" ", 3);
                     if (parts.length < 3 || parts[1].trim().isEmpty() || parts[2].trim().isEmpty()) {
@@ -260,6 +269,33 @@ public class MailServer {
         log("Authentication successful for " + username);
 
         // 3. Đọc tất cả các file trong thư mục user bằng listFiles() (bỏ qua file password.txt)
+        File[] files = userFolder.listFiles();
+        StringBuilder sb = new StringBuilder();
+        sb.append("LOGIN SUCCESS\n");
+        sb.append("Danh sach email cua ").append(username).append(":\n");
+
+        if (files == null || files.length == 0) {
+            sb.append("(Thu muc trong, khong co email)");
+        } else {
+            int count = 1;
+            for (File file : files) {
+                if (file.isFile() && !file.getName().equals("password.txt")) {
+                    sb.append(count).append(". ").append(file.getName()).append("\n");
+                    count++;
+                }
+            }
+        }
+
+        return sb.toString().trim();
+    }
+
+    public static String handleGetEmails(String username) {
+        File userFolder = new File(MAIL_DATA_DIR, username);
+
+        if (!userFolder.exists() || !userFolder.isDirectory()) {
+            return "GET_EMAILS_FAIL - Tai khoan [" + username + "] khong ton tai tren Server!";
+        }
+
         File[] files = userFolder.listFiles();
         StringBuilder sb = new StringBuilder();
         sb.append("LOGIN SUCCESS\n");
