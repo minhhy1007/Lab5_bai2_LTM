@@ -32,12 +32,16 @@ public class MailClient {
             if (choice.equals("1")) {
                 System.out.print("Nhap username moi: ");
                 String username = scanner.nextLine().trim();
-                dos.writeUTF("CREATE_USER " + username);
+                System.out.print("Nhap mat khau moi: ");
+                String password = scanner.nextLine().trim();
+                dos.writeUTF("CREATE_USER " + username + " " + password);
                 dos.flush();
             } else if (choice.equals("2")) {
                 System.out.print("Nhap username dang nhap: ");
                 String username = scanner.nextLine().trim();
-                dos.writeUTF("LOGIN " + username);
+                System.out.print("Nhap mat khau dang nhap: ");
+                String password = scanner.nextLine().trim();
+                dos.writeUTF("LOGIN " + username + " " + password);
                 dos.flush();
             } else if (choice.equals("3")) {
                 dos.writeUTF("SEND_MAIL");
