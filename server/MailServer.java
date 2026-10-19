@@ -342,7 +342,6 @@ public class MailServer {
             return "SEND_MAIL_FAIL - Nguoi nhan [" + toUser + "] khong ton tai tren Server!";
         }
 
-        // 1. Tạo file trong hòm thư người nhận (mail_001.txt, mail_002.txt...)
         int index = 1;
         File mailFile;
         while (true) {
@@ -352,21 +351,6 @@ public class MailServer {
                 break;
             }
             index++;
-        }
-
-        // 2. Tạo bản sao file trong hòm thư người gửi (sent_001.txt, sent_002.txt...)
-        File senderFolder = new File(MAIL_DATA_DIR, fromUser);
-        int sentIndex = 1;
-        File sentFile = null;
-        if (senderFolder.exists()) {
-            while (true) {
-                String sentFileName = String.format("sent_%03d.txt", sentIndex);
-                sentFile = new File(senderFolder, sentFileName);
-                if (!sentFile.exists()) {
-                    break;
-                }
-                sentIndex++;
-            }
         }
 
         try {
@@ -382,21 +366,7 @@ public class MailServer {
                     writer.newLine();
                 }
 
-                // Ghi file bản sao thư đã gửi vào thư mục người gửi
-                if (sentFile != null) {
-                    sentFile.createNewFile();
-                    try (BufferedWriter writer = new BufferedWriter(new FileWriter(sentFile))) {
-                        writer.write("FROM: " + fromUser);
-                        writer.newLine();
-                        writer.write("TO: " + toUser);
-                        writer.newLine();
-                        writer.newLine();
-                        writer.write(body);
-                        writer.newLine();
-                    }
-                }
-
-                log("Email saved: " + mailFile.getName() + " for " + toUser + " | Sent copy: " + (sentFile != null ? sentFile.getName() : "N/A"));
+                log("Email saved: " + mailFile.getName() + " for " + toUser);
                 return "SEND_MAIL_SUCCESS - Da gui email den [" + toUser + "] (File nhan: " + mailFile.getName() + ")!";
             } else {
                 return "SEND_MAIL_FAIL - Khong the tao file email!";

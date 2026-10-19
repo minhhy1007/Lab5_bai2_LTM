@@ -38,14 +38,10 @@ public class MailClientGUI extends JFrame {
     private JTextField txtRegPass;
     private JTextField txtRegConfirmPass;
 
-    // UI Components - Mailbox Panel (Phân chia Hòm thư đến INBOX và Hòm thư đã gửi SENT MAIL)
+    // UI Components - Mailbox Panel (Hòm thư đến INBOX MAILBOX)
     private JLabel lblUserHeader;
-    
-    private JTabbedPane mailboxTabPane;
-    private DefaultListModel<String> inboxListModel;
-    private JList<String> inboxList;
-    private DefaultListModel<String> sentListModel;
-    private JList<String> sentList;
+    private DefaultListModel<String> emailListModel;
+    private JList<String> emailList;
 
     private JTextArea txtEmailViewer;
     private JLabel lblSelectedFileName;
@@ -63,7 +59,7 @@ public class MailClientGUI extends JFrame {
     public MailClientGUI() {
         super("Mail Client - TCP Socket Application");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        setSize(920, 660);
+        setSize(850, 640);
         setLocationRelativeTo(null);
 
         cardLayout = new CardLayout();
@@ -112,7 +108,7 @@ public class MailClientGUI extends JFrame {
         card.add(createLabel("Host / Server IP:"), gbc);
 
         gbc.gridx = 1;
-        txtHost = new JTextField("localhost", 18);
+        txtHost = new JTextField("172.20.10.2", 18);
         txtHost.setFont(new Font("Segoe UI", Font.PLAIN, 13));
         card.add(txtHost, gbc);
 
@@ -381,48 +377,32 @@ public class MailClientGUI extends JFrame {
 
         panel.add(headerBar, BorderLayout.NORTH);
 
-        // Main Content (SplitPane: Left Mail List Tabs, Right Email Content Viewer)
-        mailboxTabPane = new JTabbedPane();
-        mailboxTabPane.setFont(new Font("Segoe UI", Font.BOLD, 12));
-
-        // Tab 1: INBOX (Thư đến)
-        inboxListModel = new DefaultListModel<>();
-        inboxList = new JList<>(inboxListModel);
-        inboxList.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-        inboxList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        inboxList.addListSelectionListener(e -> {
+        // Main Content (SplitPane: Left Mail List, Right Email Content Viewer)
+        emailListModel = new DefaultListModel<>();
+        emailList = new JList<>(emailListModel);
+        emailList.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+        emailList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        emailList.addListSelectionListener(e -> {
             if (!e.getValueIsAdjusting()) {
-                String selectedFile = inboxList.getSelectedValue();
+                String selectedFile = emailList.getSelectedValue();
                 if (selectedFile != null) {
                     readEmailContent(cleanFileName(selectedFile));
                 }
             }
         });
-        JScrollPane scrollInbox = new JScrollPane(inboxList);
-        scrollInbox.setBorder(new LineBorder(BORDER_COLOR, 1));
-        mailboxTabPane.addTab(" 📥 THƯ ĐẾN (INBOX) ", scrollInbox);
-
-        // Tab 2: SENT MAIL (Thư đã gửi cho client khác)
-        sentListModel = new DefaultListModel<>();
-        sentList = new JList<>(sentListModel);
-        sentList.setFont(new Font("Segoe UI", Font.PLAIN, 13));
-        sentList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        sentList.addListSelectionListener(e -> {
-            if (!e.getValueIsAdjusting()) {
-                String selectedFile = sentList.getSelectedValue();
-                if (selectedFile != null) {
-                    readEmailContent(cleanFileName(selectedFile));
-                }
-            }
-        });
-        JScrollPane scrollSent = new JScrollPane(sentList);
-        scrollSent.setBorder(new LineBorder(BORDER_COLOR, 1));
-        mailboxTabPane.addTab(" 📤 THƯ ĐÃ GỬI (SENT MAIL) ", scrollSent);
 
         JPanel leftPanel = new JPanel(new BorderLayout(5, 5));
         leftPanel.setBackground(CARD_BG);
         leftPanel.setBorder(new EmptyBorder(10, 10, 10, 10));
-        leftPanel.add(mailboxTabPane, BorderLayout.CENTER);
+        
+        JLabel lblInboxHeader = new JLabel("INBOX MAILBOX");
+        lblInboxHeader.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        lblInboxHeader.setForeground(TEXT_COLOR);
+        leftPanel.add(lblInboxHeader, BorderLayout.NORTH);
+
+        JScrollPane scrollList = new JScrollPane(emailList);
+        scrollList.setBorder(new LineBorder(BORDER_COLOR, 1));
+        leftPanel.add(scrollList, BorderLayout.CENTER);
 
         // Right Viewer Panel
         JPanel rightPanel = new JPanel(new BorderLayout(5, 5));
@@ -443,8 +423,8 @@ public class MailClientGUI extends JFrame {
         rightPanel.add(scrollViewer, BorderLayout.CENTER);
 
         JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, leftPanel, rightPanel);
-        splitPane.setDividerLocation(300);
-        splitPane.setResizeWeight(0.35);
+        splitPane.setDividerLocation(260);
+        splitPane.setResizeWeight(0.3);
 
         panel.add(splitPane, BorderLayout.CENTER);
 
@@ -462,12 +442,7 @@ public class MailClientGUI extends JFrame {
         JButton btnRead = new JButton("Read Email");
         styleButton(btnRead, PRIMARY_COLOR, Color.WHITE);
         btnRead.addActionListener(e -> {
-            String sel = null;
-            if (mailboxTabPane.getSelectedIndex() == 0) {
-                sel = inboxList.getSelectedValue();
-            } else {
-                sel = sentList.getSelectedValue();
-            }
+            String sel = emailList.getSelectedValue();
             if (sel == null) {
                 JOptionPane.showMessageDialog(this, "Vui long chon file email trong danh sach!", "Thong bao", JOptionPane.INFORMATION_MESSAGE);
             } else {
@@ -510,27 +485,20 @@ public class MailClientGUI extends JFrame {
         String response = sendTcpRequest("GET_EMAILS " + currentUser);
         if (response != null && response.startsWith("LOGIN SUCCESS")) {
             updateMailboxListFromResponse(response);
-            lblActionStatus.setText("Trạng thái: Đã làm mới danh sách (Thư đến & Thư đã gửi) trong mail_data/" + currentUser + "/");
+            lblActionStatus.setText("Trạng thái: Đã làm mới danh sách hòm thư trong mail_data/" + currentUser + "/");
             JOptionPane.showMessageDialog(this, "Mailbox refreshed successfully!", "Refresh", JOptionPane.INFORMATION_MESSAGE);
         }
     }
 
     private void updateMailboxListFromResponse(String response) {
-        inboxListModel.clear();
-        sentListModel.clear();
-
+        emailListModel.clear();
         String[] lines = response.split("\n");
         for (String line : lines) {
             line = line.trim();
             if (line.isEmpty() || line.startsWith("LOGIN SUCCESS") || line.startsWith("Danh sach email")) {
                 continue;
             }
-            String cleanName = cleanFileName(line);
-            if (cleanName.startsWith("sent_")) {
-                sentListModel.addElement(line);
-            } else {
-                inboxListModel.addElement(line);
-            }
+            emailListModel.addElement(line);
         }
     }
 
@@ -541,14 +509,9 @@ public class MailClientGUI extends JFrame {
         if (response != null && response.startsWith("READ_MAIL_SUCCESS")) {
             String content = response.substring("READ_MAIL_SUCCESS".length()).trim();
             
-            boolean isSentMail = fileName.startsWith("sent_");
             StringBuilder formatted = new StringBuilder();
             formatted.append("====================================================\n");
-            if (isSentMail) {
-                formatted.append("📤 LỊCH SỬ THƯ ĐÃ GỬI TỚI CLIENT KHÁC (SENT MAIL)\n");
-            } else {
-                formatted.append("📥 THƯ ĐẾN TRONG HÒM THƯ (INBOX)\n");
-            }
+            formatted.append("📥 THÔNG TIN FILE EMAIL NỘI BỘ (INBOX)\n");
             formatted.append("• Tên Tập Tin: ").append(fileName).append("\n");
             formatted.append("• Hòm Thư Tài Khoản: ").append(currentUser).append("\n");
             formatted.append("• Đường Dẫn File Server: mail_data/").append(currentUser).append("/").append(fileName).append("\n");
@@ -556,11 +519,7 @@ public class MailClientGUI extends JFrame {
             formatted.append(content);
 
             txtEmailViewer.setText(formatted.toString());
-            if (isSentMail) {
-                lblActionStatus.setText("Trạng thái: Đang xem lịch sử thư đã gửi cho client khác [" + fileName + "].");
-            } else {
-                lblActionStatus.setText("Trạng thái: Đã tải nội dung file [" + fileName + "] từ Server.");
-            }
+            lblActionStatus.setText("Trạng thái: Đã tải nội dung file [" + fileName + "] từ Server.");
         } else {
             txtEmailViewer.setText("Không thể đọc file email: " + response);
         }
@@ -637,14 +596,10 @@ public class MailClientGUI extends JFrame {
                 String res = dis.readUTF();
                 if (res.startsWith("SEND_MAIL_SUCCESS")) {
                     String msg = "Gửi email thành công từ [" + currentUser + "] đến client [" + toUser + "]!\n" +
-                                 "• File nhận trên Server: mail_data/" + toUser + "/\n" +
-                                 "• Bản sao lưu đã gửi: mail_data/" + currentUser + "/sent_xxx.txt";
+                                 "• File nhận sinh ra trên Server: mail_data/" + toUser + "/mail_xxx.txt";
                     JOptionPane.showMessageDialog(composeDialog, msg, "Gửi Mail Thành Công", JOptionPane.INFORMATION_MESSAGE);
-                    lblActionStatus.setText("Trạng thái: Đã gửi mail từ [" + currentUser + "] đến [" + toUser + "]. Bản sao lưu tại Tab 'THƯ ĐÃ GỬI'.");
+                    lblActionStatus.setText("Trạng thái: Đã gửi mail từ [" + currentUser + "] đến client [" + toUser + "]. File sinh ra tại mail_data/" + toUser + "/");
                     composeDialog.dispose();
-                    refreshMailbox();
-                    // Tự động nhảy sang tab THƯ ĐÃ GỬI
-                    mailboxTabPane.setSelectedIndex(1);
                 } else {
                     JOptionPane.showMessageDialog(composeDialog, res, "Send Mail Error", JOptionPane.ERROR_MESSAGE);
                 }
@@ -670,8 +625,7 @@ public class MailClientGUI extends JFrame {
         currentUser = null;
         txtEmailViewer.setText("");
         lblSelectedFileName.setText("EMAIL CONTENT (Select an email)");
-        inboxListModel.clear();
-        sentListModel.clear();
+        emailListModel.clear();
         
         cardLayout.show(cardsPanel, CARD_AUTH);
         JOptionPane.showMessageDialog(this, "Logged out successfully.", "Logout", JOptionPane.INFORMATION_MESSAGE);

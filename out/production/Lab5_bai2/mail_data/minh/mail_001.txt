@@ -1,4 +1,0 @@
-FROM: vo
-TO: minh
-
-le huu minh hy

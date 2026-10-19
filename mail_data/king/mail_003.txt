@@ -1,4 +1,0 @@
-FROM: kim
-TO: king
-
-hy12334

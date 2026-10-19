@@ -1,4 +1,0 @@
-FROM: kim
-TO: hy
-
-minhhhhhhhhuwhfbhashkdsafsjaf hkhef

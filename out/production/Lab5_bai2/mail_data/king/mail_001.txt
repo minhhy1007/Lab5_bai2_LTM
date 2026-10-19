@@ -1,4 +1,0 @@
-FROM: user1
-TO: king
-
-minh hy dep trai
